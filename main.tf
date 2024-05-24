@@ -50,7 +50,7 @@ resource "aws_route53_zone" "site" {
 
 # Create any additional non-alias Route53 records for the hosted zone
 resource "aws_route53_record" "non_alias" {
-  for_each = { for record in var.var.route53_records : "${record.name == "" ? "@" : record.name}.${substr(md5(record.records[0]), 0, 5)}" => record if record.alias == null }
+  for_each = { for record in var.route53_records : "${record.name == "" ? "@" : record.name}.${substr(md5(record.records[0]), 0, 5)}" => record if record.alias == null }
 
   zone_id = aws_route53_zone.site.zone_id
 
