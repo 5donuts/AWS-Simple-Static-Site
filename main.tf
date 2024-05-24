@@ -14,6 +14,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+locals {
+  site_bucket = {
+    name                = var.domain_name
+    block_public_access = true
+    object_ownership    = "BucketOwnerEnforced"
+  }
+
+  logs_bucket = {
+    name                = "${local.site_bucket.name}-logs"
+    block_public_access = true
+    object_ownership    = "BucketOwnerEnforced"
+  }
+
+  logs_root_path   = "logs"
+  bucket_logs_path = "${local.logs_root_path}/origin"
+}
+
 # --------------------------------------------------------------------------- #
 #                   Configure the Route53 Public Hosted Zone                  #
 # --------------------------------------------------------------------------- #
@@ -104,4 +121,115 @@ resource "aws_acm_certificate_validation" "site" {
 
   certificate_arn         = aws_acm_certificate.site.arn
   validation_record_fqdns = [for record in aws_route53_record.acm_validation : record.fqdn]
+}
+
+# --------------------------------------------------------------------------- #
+#                          Configure the S3 buckets                           #
+# --------------------------------------------------------------------------- #
+
+resource "aws_s3_bucket" "buckets" {
+  for_each = toset([local.site_bucket.name, local.logs_bucket.name])
+
+  bucket = each.value
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "sse_s3" {
+  for_each = {
+    for bucket in [local.site_bucket.name, local.logs_bucket.name] :
+    bucket => aws_s3_bucket.buckets[bucket].id
+  }
+
+  bucket = each.value
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_ownership_controls" "buckets" {
+  for_each = {
+    for bucket in [local.site_bucket, local.logs_bucket] :
+    bucket.name => {
+      id        = aws_s3_bucket.buckets[bucket.name].id,
+      ownership = bucket.object_ownership
+    }
+  }
+
+  bucket = each.value.id
+
+  rule {
+    object_ownership = each.value.ownership
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "buckets" {
+  for_each = {
+    for bucket in [local.site_bucket, local.logs_bucket] :
+    bucket.name => {
+      id                  = aws_s3_bucket.buckets[bucket.name].id,
+      block_public_access = bucket.block_public_access
+    }
+  }
+
+  bucket = each.value.id
+
+  block_public_acls       = each.value.block_public_access
+  block_public_policy     = each.value.block_public_access
+  ignore_public_acls      = each.value.block_public_access
+  restrict_public_buckets = each.value.block_public_access
+}
+
+resource "aws_s3_bucket_logging" "site_bucket" {
+  bucket        = aws_s3_bucket.buckets[local.site_bucket.name].id
+  target_bucket = aws_s3_bucket.buckets[local.logs_bucket.name].id
+  target_prefix = local.bucket_logs_path
+}
+
+data "aws_iam_policy_document" "logs_bucket" {
+  statement {
+    sid = "S3PutAccessLogs"
+
+    principals {
+      type        = "Service"
+      identifiers = ["s3.amazonaws.com"]
+    }
+
+    effect  = "Allow"
+    actions = ["s3:PutObject*"]
+
+    resources = [
+      "${aws_s3_bucket.buckets[local.logs_bucket.name].arn}",
+      "${aws_s3_bucket.buckets[local.logs_bucket.name].arn}/${local.bucket_logs_path}/*"
+    ]
+  }
+}
+
+resource "aws_s3_bucket_policy" "logs_bucket" {
+  bucket = aws_s3_bucket.buckets[local.logs_bucket.name].id
+  policy = data.aws_iam_policy_document.logs_bucket.json
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "logs_bucket" {
+  bucket = aws_s3_bucket.buckets[local.logs_bucket.name].id
+
+  rule {
+    id     = "logs"
+    status = "Enabled"
+
+    filter {
+      prefix = "${local.logs_root_path}/"
+    }
+
+    transition {
+      days          = 30
+      storage_class = "GLACIER"
+    }
+
+    transition {
+      days          = 365
+      storage_class = "DEEP_ARCHIVE"
+    }
+  }
 }
