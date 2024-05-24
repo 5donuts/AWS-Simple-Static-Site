@@ -29,3 +29,25 @@ variable "default_tags" {
     Application = "AWS Simple Static Site"
   }
 }
+
+variable "domain_name" {
+  type        = string
+  description = "The domain name you purchased to use for the Route53 public hosted zone"
+}
+
+variable "route53_records" {
+  description = "List of additional Route53 records to add to the hosted zone"
+  default     = []
+
+  type = list(object({
+    name    = string,                           # Name of the record to add
+    type    = string,                           # The record type. Options: A, AAAA, CAA, CNAME, DS, MX, NAPTR, NS, PTR, SOA, SPF, SRV and TXT
+    ttl     = optional(number, 3600),           # Required for non-alias records. In seconds, defaults to 1hr.
+    records = optional(list(string)),           # Required for non-alias records
+    alias = optional(object({                   # Conflicts with 'ttl' and 'records'
+      name               = string,              # DNS domain name for a CloudFront distribution, S3 bucket, ELB, or another resource record set in this hosted zone
+      zone_id            = string,              # Hosted zone ID for a CloudFront distribution, S3 bucket, ELB, or Route 53 hosted zone
+      eval_target_health = optional(bool, true) # Set to true if you want Route 53 to determine whether to respond to DNS queries using this resource record set by checking the health of the resource record set
+    }))
+  }))
+}
