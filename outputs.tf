@@ -20,3 +20,13 @@ output "hosted_zone_nameservers" {
   description = "Nameservers for the Route53 public hosted zone"
   value       = aws_route53_zone.site.name_servers
 }
+
+output "site_content_bucket" {
+  description = "ID of the S3 bucket hosting site content"
+  value       = aws_s3_bucket.buckets[local.site_bucket.name].id
+}
+
+output "cloudfront_distribution_id" {
+  description = "ID of the CloudFront distribution serving the site"
+  value       = aws_cloudfront_distribution.this.id
+}
