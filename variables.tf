@@ -51,3 +51,21 @@ variable "route53_records" {
     }))
   }))
 }
+
+variable "default_root_object" {
+  type        = string
+  default     = "index.html"
+  description = "The default root object for CloudFront to use"
+}
+
+variable "custom_error_responses" {
+  description = "Custom error response configurations for the CloudFront Distribution"
+  default     = []
+
+  type = list(object({
+    error_caching_min_ttl = number,
+    error_code            = number,
+    response_code         = number,
+    response_page_path    = string
+  }))
+}
