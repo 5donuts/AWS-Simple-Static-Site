@@ -91,6 +91,7 @@ resource "aws_route53_record" "acm_validation" {
   name = each.value.name
   type = each.value.type
   ttl  = 60
+
   records = [
     each.value.record
   ]
@@ -274,7 +275,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs_bucket" {
     }
   }
 }
-
 
 # --------------------------------------------------------------------------- #
 #                    Configure the CloudFront Distribution                    #
