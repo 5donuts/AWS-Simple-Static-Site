@@ -369,7 +369,7 @@ resource "aws_cloudfront_distribution" "this" {
   comment             = "${var.domain_name} Distribution"
   enabled             = true
   is_ipv6_enabled     = true
-  price_class         = "PriceClass_100" # Cheapest; only NA + Europe
+  price_class         = var.cloudfront_price_class
   default_root_object = var.default_root_object
 
   aliases = [
@@ -433,8 +433,8 @@ resource "aws_cloudfront_distribution" "this" {
 
   restrictions {
     geo_restriction {
-      restriction_type = "none"
-      locations        = []
+      restriction_type = var.cloudfront_restrictions.restriction_type
+      locations        = var.cloudfront_restrictions.locations
     }
   }
 }

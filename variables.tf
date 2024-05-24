@@ -69,3 +69,19 @@ variable "custom_error_responses" {
     response_page_path    = string
   }))
 }
+
+variable "cloudfront_price_class" {
+  type        = string
+  default     = "PriceClass_100" # Cheapest; only NA + Europe. Options: PriceClass_100, PriceClass_200, PriceClass_All
+  description = "Price class of the CDN. See https://aws.amazon.com/cloudfront/pricing/ for details."
+}
+
+variable "cloudfront_restrictions" {
+  description = "Whitelist or blacklist certain regions, or place no restrictions on viewing your content."
+  default     = {} # Default to no restrictions
+
+  type = object({
+    restriction_type = optional(string, "none"),  # Options are 'whitelist', 'blacklist', and 'none'
+    locations        = optional(list(string), []) # Country codes affected; see https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
+  })
+}
