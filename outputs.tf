@@ -1,5 +1,5 @@
 # AWS Simple Static Site - IaC to deploy an economical static site on AWS
-# Copyright (C) 2024  Charles German <5donuts@pm.me>
+# Copyright (C) 2024, 2025  Charles German <5donuts@pm.me>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
