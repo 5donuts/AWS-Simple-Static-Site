@@ -15,14 +15,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 variable "primary_region" {
+  description = "The AWS region in which to provision most resources. Some resources _must_ be provisioned in us-east-1 (e.g., CloudFront distributions)"
   type        = string
   default     = "us-east-1"
-  description = "The AWS region in which to provision most resources. Some resources _must_ be provisioned in us-east-1 (e.g., CloudFront distributions)"
 }
 
 variable "default_tags" {
-  type        = map(any)
   description = "Default tags to apply to taggable resources"
+  type        = map(any)
 
   default = {
     Provisioner = "OpenTofu"
@@ -31,8 +31,8 @@ variable "default_tags" {
 }
 
 variable "domain_name" {
+  description = "The domain name to use for the site"
   type        = string
-  description = "The domain name you purchased to use for the Route53 public hosted zone"
 }
 
 variable "extra_route53_records" {
@@ -53,9 +53,9 @@ variable "extra_route53_records" {
 }
 
 variable "default_root_object" {
+  description = "The default root object for CloudFront to use"
   type        = string
   default     = "index.html"
-  description = "The default root object for CloudFront to use"
 }
 
 variable "custom_error_responses" {
@@ -71,9 +71,9 @@ variable "custom_error_responses" {
 }
 
 variable "cloudfront_price_class" {
+  description = "Price class of the CDN. See https://aws.amazon.com/cloudfront/pricing/ for details."
   type        = string
   default     = "PriceClass_100" # Cheapest; only NA + Europe. Options: PriceClass_100, PriceClass_200, PriceClass_All
-  description = "Price class of the CDN. See https://aws.amazon.com/cloudfront/pricing/ for details."
 }
 
 variable "cloudfront_restrictions" {
