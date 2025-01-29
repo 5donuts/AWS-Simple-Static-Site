@@ -35,8 +35,8 @@ variable "domain_name" {
   type        = string
 }
 
-variable "extra_route53_records" {
-  description = "Route53 records besides those needed for the site to add to the hosted zone"
+variable "route53_records" {
+  description = "List of additional Route53 records to add to the hosted zone"
   default     = []
 
   type = list(object({

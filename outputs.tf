@@ -18,7 +18,7 @@ output "hosted_zone_nameservers" {
   # If you purchased the domain name from a registrar other than AWS, you'll need to configure these nameservers
   # as authorities for the domain.
   description = "Nameservers for the Route53 public hosted zone"
-  value       = module.route53.hosted_zone_nameservers
+  value       = aws_route53_zone.site.name_servers
 }
 
 output "site_content_bucket" {

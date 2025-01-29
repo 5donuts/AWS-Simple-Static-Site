@@ -39,11 +39,41 @@ locals {
 #                   Configure the Route53 Public Hosted Zone                  #
 # --------------------------------------------------------------------------- #
 
-module "route53" {
-  source = "${path.module}/modules/route53"
+resource "aws_route53_zone" "site" {
+  name = var.domain_name
 
-  domain_name     = var.domain_name
-  route53_records = var.extra_route53_records
+  lifecycle {
+    # AWS charges US$0.50 per hosted zone created within one month, up to a maximum of 25 hosted zones.
+    prevent_destroy = true
+  }
+}
+
+# Create any additional non-alias Route53 records for the hosted zone
+resource "aws_route53_record" "non_alias" {
+  for_each = { for record in var.route53_records : "${record.name == "" ? "@" : record.name}.${substr(md5(record.records[0]), 0, 5)}" => record if record.alias == null }
+
+  zone_id = aws_route53_zone.site.zone_id
+
+  name    = each.value.name
+  type    = each.value.type
+  ttl     = each.value.ttl
+  records = each.value.records
+}
+
+# Create any additional alias Route53 records for the hosted zone
+resource "aws_route53_record" "alias" {
+  for_each = { for record in var.route53_records : "${record.name == "" ? "@" : record.name}.${substr(md5(record.records[0]), 0, 5)}" => record if record.alias != null }
+
+  zone_id = aws_route53_zone.site.zone_id
+
+  name = each.value.name
+  type = each.value.type
+
+  alias {
+    name                   = each.value.alias.name
+    zone_id                = each.value.alias.zone_id
+    evaluate_target_health = each.value.alias.eval_target_health
+  }
 }
 
 # Records to validate the ACM certificate used by the site
@@ -56,7 +86,7 @@ resource "aws_route53_record" "acm_validation" {
     }
   }
 
-  zone_id = module.route53.hosted_zone_id
+  zone_id = aws_route53_zone.site.zone_id
 
   name = each.value.name
   type = each.value.type
