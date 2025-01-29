@@ -78,7 +78,15 @@ resource "aws_acm_certificate" "site" {
 
   domain_name       = var.domain_name
   validation_method = "DNS"
-  key_algorithm     = "RSA_2048" # I kept getting SSL_ERROR_NO_CYPHER_OVERLAP errors with ECDSA ciphers...
+
+  # ACM can only request new certificates with the following algorithms:
+  # * RSA_2048
+  # * EC_prime256v1
+  # * EC_secp384r1
+  #
+  # However, a number of additional algorithms are supported when importing certificates.
+  # For details, see: https://docs.aws.amazon.com/acm/latest/userguide/acm-certificate-characteristics.html
+  key_algorithm = "RSA_2048"
 
   subject_alternative_names = [
     "www.${var.domain_name}"
