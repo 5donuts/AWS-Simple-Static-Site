@@ -2,6 +2,12 @@
 
 An OpenTofu module to economically host a static site on AWS using S3 and CloudFront.
 
+> [!WARNING]
+> Below version `1.0.0`, this project may have breaking changes on minor release versions.
+> Additionally, the `main` branch is the development branch and there may be breaking changes
+> on commits. Starting at version `1.0.0`, this project will follow SemVer guidelines with
+> respect to breaking changes.
+
 ## Configuration
 
 If you want to deploy the site with the default configuration options, you can simply run `tofu apply`.
