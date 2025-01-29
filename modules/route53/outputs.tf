@@ -14,19 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+output "hosted_zone_id" {
+  description = "The Route53 Hosted Zone ID"
+  value       = aws_route53_zone.this.zone_id
+}
+
 output "hosted_zone_nameservers" {
-  # If you purchased the domain name from a registrar other than AWS, you'll need to configure these nameservers
-  # as authorities for the domain.
-  description = "Nameservers for the Route53 public hosted zone"
-  value       = module.route53.hosted_zone_nameservers
-}
-
-output "site_content_bucket" {
-  description = "ID of the S3 bucket hosting site content"
-  value       = aws_s3_bucket.buckets[local.site_bucket.name].id
-}
-
-output "cloudfront_distribution_id" {
-  description = "ID of the CloudFront distribution serving the site"
-  value       = aws_cloudfront_distribution.this.id
+  description = "The AWS nameservers for the Route53 Hosted Zone"
+  value       = aws_route53_zone.this.name_servers
 }
