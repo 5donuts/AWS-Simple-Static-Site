@@ -463,9 +463,13 @@ resource "aws_cloudfront_distribution" "this" {
       }
     }
 
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.auto_index.arn
+    dynamic "function_association" {
+      for_each = var.cf_functions
+
+      content {
+        event_type   = function_association.value.event_type
+        function_arn = aws_cloudfront_function.this[each.key].arn
+      }
     }
   }
 
@@ -483,13 +487,17 @@ resource "aws_cloudfront_distribution" "this" {
   }
 }
 
-# Function to automatically add the trailing `/index.html` to page requests.
-resource "aws_cloudfront_function" "auto_index" {
+# --------------------------------------------------------------------------- #
+#              Configure CloudFront Functions for Distribution                #
+# --------------------------------------------------------------------------- #
+
+resource "aws_cloudfront_function" "this" {
+  for_each = var.cf_functions
   provider = aws.us_east_1
 
-  name    = "auto-index"
-  runtime = "cloudfront-js-1.0"
-  comment = "Automatically add 'index.html' to page requests for ${var.domain_name}"
+  name    = "${var.domain_name}-${replace(each.key, " ", "_")}-function"
+  comment = each.value.function_comment
   publish = true
-  code    = file("${path.module}/auto-index.js")
+  runtime = each.value.function_runtime
+  code    = file(each.value.function_code_path)
 }
