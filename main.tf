@@ -108,6 +108,21 @@ resource "aws_route53_record" "acm_validation" {
   ]
 }
 
+# Alias records for the CloudFront distribution
+resource "aws_route53_record" "cdn" {
+  for_each = toset([var.domain_name, "www.${var.domain_name}"])
+
+  zone_id = aws_route53_zone.site.zone_id
+  name    = each.value
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.this.domain_name
+    zone_id                = aws_cloudfront_distribution.this.hosted_zone_id
+    evaluate_target_health = true
+  }
+}
+
 # --------------------------------------------------------------------------- #
 #                Configure the ACM certificate for the website                #
 # --------------------------------------------------------------------------- #
