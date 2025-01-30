@@ -49,7 +49,7 @@ variable "cf_custom_error_responses" {
   default     = []
 
   type = list(object({
-    error_caching_min_ttl = number,
+    error_caching_min_ttl = optional(number, 60),
     error_code            = number,
     response_code         = number,
     response_page_path    = string
