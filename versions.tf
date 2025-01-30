@@ -23,7 +23,7 @@ terraform {
       version = "~> 5.0"
 
       # Some resources _must_ be deployed in the us-east-1 region
-      configuration_aliases = [ aws.us_east_1 ]
+      configuration_aliases = [aws.us_east_1]
     }
   }
 }

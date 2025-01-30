@@ -413,8 +413,8 @@ resource "aws_cloudfront_distribution" "this" {
   enabled             = true
   is_ipv6_enabled     = true
   http_version        = "http2and3" # Enable HTTP/2 and HTTP/3 (QUIC)
-  price_class         = var.cloudfront_price_class
-  default_root_object = var.default_root_object
+  price_class         = var.cf_price_class
+  default_root_object = var.cf_default_root_object
 
   aliases = [
     var.domain_name,
@@ -434,7 +434,7 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   dynamic "custom_error_response" {
-    for_each = var.custom_error_responses
+    for_each = var.cf_custom_error_responses
 
     content {
       error_caching_min_ttl = custom_error_response.value.error_caching_min_ttl
@@ -477,8 +477,8 @@ resource "aws_cloudfront_distribution" "this" {
 
   restrictions {
     geo_restriction {
-      restriction_type = var.cloudfront_restrictions.restriction_type
-      locations        = var.cloudfront_restrictions.locations
+      restriction_type = var.cf_restrictions.restriction_type
+      locations        = var.cf_restrictions.locations
     }
   }
 }

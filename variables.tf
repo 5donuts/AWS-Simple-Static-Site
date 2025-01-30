@@ -24,11 +24,13 @@ variable "route53_records" {
   default     = []
 
   type = list(object({
-    name    = string,                           # Name of the record to add
-    type    = string,                           # The record type. Options: A, AAAA, CAA, CNAME, DS, MX, NAPTR, NS, PTR, SOA, SPF, SRV and TXT
-    ttl     = optional(number, 3600),           # Required for non-alias records. In seconds, defaults to 1hr.
-    records = optional(list(string)),           # Required for non-alias records
-    alias = optional(object({                   # Conflicts with 'ttl' and 'records'
+    name    = string,                 # Name of the record to add
+    type    = string,                 # The record type. Options: A, AAAA, CAA, CNAME, DS, MX, NAPTR, NS, PTR, SOA, SPF, SRV and TXT
+    ttl     = optional(number, 3600), # Required for non-alias records. In seconds, defaults to 1hr.
+    records = optional(list(string)), # Required for non-alias records
+
+    # Conflicts with 'ttl' and 'records'
+    alias = optional(object({
       name               = string,              # DNS domain name for a CloudFront distribution, S3 bucket, ELB, or another resource record set in this hosted zone
       zone_id            = string,              # Hosted zone ID for a CloudFront distribution, S3 bucket, ELB, or Route 53 hosted zone
       eval_target_health = optional(bool, true) # Set to true if you want Route 53 to determine whether to respond to DNS queries using this resource record set by checking the health of the resource record set
@@ -36,13 +38,13 @@ variable "route53_records" {
   }))
 }
 
-variable "default_root_object" {
+variable "cf_default_root_object" {
   description = "The default root object for CloudFront to use"
   type        = string
   default     = "index.html"
 }
 
-variable "custom_error_responses" {
+variable "cf_custom_error_responses" {
   description = "Custom error response configurations for the CloudFront Distribution"
   default     = []
 
@@ -54,13 +56,13 @@ variable "custom_error_responses" {
   }))
 }
 
-variable "cloudfront_price_class" {
+variable "cf_price_class" {
   description = "Price class of the CDN. See https://aws.amazon.com/cloudfront/pricing/ for details."
   type        = string
   default     = "PriceClass_100" # Cheapest; only NA + Europe. Options: PriceClass_100, PriceClass_200, PriceClass_All
 }
 
-variable "cloudfront_restrictions" {
+variable "cf_restrictions" {
   description = "Whitelist or blacklist certain regions, or place no restrictions on viewing your content."
   default     = {} # Default to no restrictions
 
