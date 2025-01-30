@@ -412,6 +412,7 @@ resource "aws_cloudfront_distribution" "this" {
   comment             = "${var.domain_name} Distribution"
   enabled             = true
   is_ipv6_enabled     = true
+  http_version        = "http2and3" # Enable HTTP/2 and HTTP/3 (QUIC)
   price_class         = var.cloudfront_price_class
   default_root_object = var.default_root_object
 
