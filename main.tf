@@ -401,9 +401,37 @@ resource "aws_cloudfront_response_headers_policy" "this" {
         "https://www.${var.domain_name}"
       ]
     }
+  }
 
-    access_control_expose_headers {
-      items = []
+  # Add custom headers to responses to clients (if specified)
+  dynamic "custom_headers_config" {
+    for_each = length(var.cf_custom_headers) == 0 ? [] : ["dummy_val"]
+
+    content {
+      dynamic "items" {
+        for_each = var.cf_custom_headers
+
+        content {
+          header   = items.key
+          value    = items.value
+          override = true
+        }
+      }
+    }
+  }
+
+  # Remove headers from responses to clients (if specified)
+  dynamic "remove_headers_config" {
+    for_each = length(var.cf_remove_headers) == 0 ? [] : ["dummy_val"]
+
+    content {
+      dynamic "items" {
+        for_each = var.cf_remove_headers
+
+        content {
+          header = items.value
+        }
+      }
     }
   }
 }

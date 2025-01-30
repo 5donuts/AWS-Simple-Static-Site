@@ -72,10 +72,33 @@ variable "cf_restrictions" {
   })
 }
 
+# Configure which headers (if any) CloudFront should remove from responses.
+# CloudFront disallows removing a number of headers.
+# See: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/understanding-response-headers-policies.html#understanding-response-headers-policies-remove-headers
+variable "cf_remove_headers" {
+  description = "List of headers to remove from responses to clients."
+  type        = list(string)
+
+  # By default, filter some headers that reveal details about the underlying AWS
+  # infrastructure.
+  default = [
+    "server",                      # Reveals the 'AmazonS3' server
+    "etag",                        # Value specific to S3 buckets
+    "x-amz-server-side-encryption" # Reveals the S3-SSE scheme
+  ]
+}
+
+# Configure which headers (if any) CloudFront should add to responses.
+variable "cf_custom_headers" {
+  description = "Map of headers to add to responses to clients."
+  type        = map(string)
+  default     = {}
+}
+
 # Configure CloudFront Functions to customize distribution behaviors.
 variable "cf_functions" {
   description = "Configure CloudFront Functions to customize distribution behaviors."
-  default = null
+  default     = null
 
   type = map(object({
     event_type       = string,                                # Event the function processes; viewer-request or viewer-response
