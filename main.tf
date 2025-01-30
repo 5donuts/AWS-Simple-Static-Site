@@ -468,7 +468,7 @@ resource "aws_cloudfront_distribution" "this" {
 
       content {
         event_type   = function_association.value.event_type
-        function_arn = aws_cloudfront_function.this[each.key].arn
+        function_arn = aws_cloudfront_function.this[function_association.key].arn
       }
     }
   }
