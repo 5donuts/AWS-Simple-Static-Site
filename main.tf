@@ -499,5 +499,5 @@ resource "aws_cloudfront_function" "this" {
   comment = each.value.function_comment
   publish = true
   runtime = each.value.function_runtime
-  code    = file(each.value.function_code_path)
+  code    = each.value.function_code
 }

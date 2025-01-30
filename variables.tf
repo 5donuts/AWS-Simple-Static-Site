@@ -75,20 +75,12 @@ variable "cf_restrictions" {
 # Configure CloudFront Functions to customize distribution behaviors.
 variable "cf_functions" {
   description = "Configure CloudFront Functions to customize distribution behaviors."
+  default = null
 
   type = map(object({
-    event_type         = string,                                # Event the function processes; viewer-request or viewer-response
-    function_runtime   = optional(string, "cloudfront-js-2.0"), # cloudfront-js-1.0 or cloudfront-js-2.0
-    function_code_path = string                                 # Path to the source code for the function
-    function_comment   = optional(string)                       # Description for the function
+    event_type       = string,                                # Event the function processes; viewer-request or viewer-response
+    function_runtime = optional(string, "cloudfront-js-2.0"), # JS runtime; cloudfront-js-1.0 or cloudfront-js-2.0
+    function_code    = string                                 # The source code for the function
+    function_comment = optional(string)                       # Description for the function
   }))
-
-  default = {
-    # By default, configure a function to automatically add `/index.html` to page requests when applicable
-    Viewer-Request = {
-      event_type         = "viewer-request",
-      function_code_path = "./files/viewer-request.js"
-      function_comment   = "Automatically add '/index.html' to page requests when applicable"
-    }
-  }
 }
