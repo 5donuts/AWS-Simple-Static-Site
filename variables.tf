@@ -14,22 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-variable "primary_region" {
-  description = "The AWS region in which to provision most resources. Some resources _must_ be provisioned in us-east-1 (e.g., CloudFront distributions)"
-  type        = string
-  default     = "us-east-1"
-}
-
-variable "default_tags" {
-  description = "Default tags to apply to taggable resources"
-  type        = map(any)
-
-  default = {
-    Provisioner = "OpenTofu"
-    Application = "AWS Simple Static Site"
-  }
-}
-
 variable "domain_name" {
   description = "The domain name to use for the site"
   type        = string

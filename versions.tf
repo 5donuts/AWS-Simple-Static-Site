@@ -21,25 +21,9 @@ terraform {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.0"
+
+      # Some resources _must_ be deployed in the us-east-1 region
+      configuration_aliases = [ aws.us_east_1 ]
     }
-  }
-}
-
-# AWS provider to provision resources in the primary region
-provider "aws" {
-  region = var.primary_region
-
-  default_tags {
-    tags = var.default_tags
-  }
-}
-
-# AWS provider to provision certain resources (e.g., CloudFront distributions) in us-east-1
-provider "aws" {
-  alias  = "us_east_1"
-  region = "us-east-1"
-
-  default_tags {
-    tags = var.default_tags
   }
 }
