@@ -15,6 +15,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 locals {
+  # --- Variables related to the domain name & CloudFront distribution origin --- #
+  sanitized_domain = replace(var.domain_name, ".", "_")
+  cf_s3_origin_id  = "${local.sanitized_domain}-s3-origin"
+
+  # --- Configure the S3 buckets required for the site --- #
   site_bucket = {
     name                = var.domain_name
     block_public_access = true
@@ -27,12 +32,12 @@ locals {
     object_ownership    = "BucketOwnerPreferred" # This is annoying, but required for CloudFront logs
   }
 
-  logs_root_path       = "logs"
-  bucket_logs_path     = "${local.logs_root_path}/origin"
-  cloudfront_logs_path = "${local.logs_root_path}/cdn"
+  buckets = [local.site_bucket, local.logs_bucket]
 
-  sanitized_domain = replace(var.domain_name, ".", "_")
-  origin_id        = "${local.sanitized_domain}-s3-origin"
+  # --- Paths within the buckets where certain objects are located --- #
+  logs_root_path       = "logs"
+  bucket_logs_path     = "${local.logs_root_path}/s3"
+  cloudfront_logs_path = "${local.logs_root_path}/cf"
 }
 
 # --------------------------------------------------------------------------- #
@@ -43,14 +48,18 @@ resource "aws_route53_zone" "site" {
   name = var.domain_name
 
   lifecycle {
-    # AWS charges US$0.50 per hosted zone created within one month, up to a maximum of 25 hosted zones.
+    # AWS charges $0.50 per hosted zone, per month, up to a maximum of 25 hosted zones.
+    # If (for whatever reason), you ran a number of create & destroy plans in one month you could
+    # run your bill up to $12.50 for no real reason.
     prevent_destroy = true
   }
 }
 
-# Create any additional non-alias Route53 records for the hosted zone
+# Create specified non-alias Route53 records for the hosted zone
 resource "aws_route53_record" "non_alias" {
-  for_each = { for record in var.route53_records : "${record.name == "" ? "@" : record.name}.${substr(md5(record.records[0]), 0, 5)}" => record if record.alias == null }
+  for_each = {
+    for record in var.route53_records : "${record.name == "" ? "@" : record.name}.${substr(md5(record.records[0]), 0, 5)}" => record if record.alias == null
+  }
 
   zone_id = aws_route53_zone.site.zone_id
 
@@ -60,9 +69,11 @@ resource "aws_route53_record" "non_alias" {
   records = each.value.records
 }
 
-# Create any additional alias Route53 records for the hosted zone
+# Create specified alias Route53 records for the hosted zone
 resource "aws_route53_record" "alias" {
-  for_each = { for record in var.route53_records : "${record.name == "" ? "@" : record.name}.${substr(md5(record.records[0]), 0, 5)}" => record if record.alias != null }
+  for_each = {
+    for record in var.route53_records : "${record.name == "" ? "@" : record.name}.${substr(md5(record.records[0]), 0, 5)}" => record if record.alias != null
+  }
 
   zone_id = aws_route53_zone.site.zone_id
 
@@ -76,7 +87,7 @@ resource "aws_route53_record" "alias" {
   }
 }
 
-# Records to validate the ACM certificate used by the site
+# Records to automatically validate the ACM certificate used by the site
 resource "aws_route53_record" "acm_validation" {
   for_each = {
     for option in aws_acm_certificate.site.domain_validation_options : option.domain_name => {
@@ -141,16 +152,13 @@ resource "aws_acm_certificate_validation" "site" {
 # --------------------------------------------------------------------------- #
 
 resource "aws_s3_bucket" "buckets" {
-  for_each = toset([local.site_bucket.name, local.logs_bucket.name])
+  for_each = toset([for bucket in local.buckets : bucket.name])
 
   bucket = each.value
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "sse_s3" {
-  for_each = {
-    for bucket in [local.site_bucket.name, local.logs_bucket.name] :
-    bucket => aws_s3_bucket.buckets[bucket].id
-  }
+  for_each = { for bucket in local.buckets : bucket.name => aws_s3_bucket.buckets[bucket.name].id }
 
   bucket = each.value
 
@@ -163,8 +171,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "sse_s3" {
 
 resource "aws_s3_bucket_ownership_controls" "buckets" {
   for_each = {
-    for bucket in [local.site_bucket, local.logs_bucket] :
-    bucket.name => {
+    for bucket in local.buckets : bucket.name => {
       id        = aws_s3_bucket.buckets[bucket.name].id,
       ownership = bucket.object_ownership
     }
@@ -179,8 +186,7 @@ resource "aws_s3_bucket_ownership_controls" "buckets" {
 
 resource "aws_s3_bucket_public_access_block" "buckets" {
   for_each = {
-    for bucket in [local.site_bucket, local.logs_bucket] :
-    bucket.name => {
+    for bucket in local.buckets : bucket.name => {
       id                  = aws_s3_bucket.buckets[bucket.name].id,
       block_public_access = bucket.block_public_access
     }
@@ -289,7 +295,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs_bucket" {
 # --------------------------------------------------------------------------- #
 
 resource "aws_cloudfront_origin_access_control" "this" {
-  name                              = local.origin_id
+  name                              = local.cf_s3_origin_id
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
@@ -305,6 +311,7 @@ resource "aws_cloudfront_response_headers_policy" "this" {
 
     # Set HSTS header
     # See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+    # Also, submit the site to the HSTS preload list: https://hstspreload.org/
     strict_transport_security {
       access_control_max_age_sec = 31536000 # 1 year
       include_subdomains         = true
@@ -335,9 +342,22 @@ resource "aws_cloudfront_response_headers_policy" "this" {
     # Set Content-Security-Policy header
     # See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
     content_security_policy {
-      # You can evaluate the quality of this CSP using https://observatory.mozilla.org/analyze/dozen-donuts.com?third-party=false
-      content_security_policy = "default-src 'none'; object-src 'none'; frame-ancestors 'none'; base-uri ${var.domain_name} www.${var.domain_name}; form-action ${var.domain_name} www.${var.domain_name}; connect-src ${var.domain_name} www.${var.domain_name}; script-src ${var.domain_name} www.${var.domain_name}; style-src ${var.domain_name} www.${var.domain_name} 'unsafe-inline'; img-src ${var.domain_name} www.${var.domain_name}; font-src ${var.domain_name} www.${var.domain_name}"
-      override                = true
+      # You can evaluate the quality of this CSP using https://observatory.mozilla.org/
+      # This default CSP should be a good balance between security & functionality for many
+      # static site generators & site templates for those SSGs.
+      content_security_policy = join("; ", [
+        "default-src 'none'",
+        "object-src 'none'",
+        "frame-ancestors 'none'",
+        "base-uri ${var.domain_name} www.${var.domain_name}",
+        "form-action ${var.domain_name} www.${var.domain_name}",
+        "connect-src ${var.domain_name} www.${var.domain_name}",
+        "script-src ${var.domain_name} www.${var.domain_name}",
+        "style-src ${var.domain_name} www.${var.domain_name} 'unsafe-inline'",
+        "img-src ${var.domain_name} www.${var.domain_name}",
+        "font-src ${var.domain_name} www.${var.domain_name}"
+      ])
+      override = true
     }
   }
 
@@ -386,7 +406,7 @@ resource "aws_cloudfront_distribution" "this" {
   ]
 
   origin {
-    origin_id                = local.origin_id
+    origin_id                = local.cf_s3_origin_id
     origin_access_control_id = aws_cloudfront_origin_access_control.this.id
     domain_name              = aws_s3_bucket.buckets[local.site_bucket.name].bucket_regional_domain_name
   }
@@ -409,7 +429,7 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   default_cache_behavior {
-    target_origin_id           = local.origin_id
+    target_origin_id           = local.cf_s3_origin_id
     allowed_methods            = ["GET", "HEAD", "OPTIONS"]
     cached_methods             = ["GET", "HEAD"]
     response_headers_policy_id = aws_cloudfront_response_headers_policy.this.id
