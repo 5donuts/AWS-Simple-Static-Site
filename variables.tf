@@ -102,6 +102,7 @@ variable "cf_functions" {
 
   type = map(object({
     event_type       = string,                                # Event the function processes; viewer-request or viewer-response
+    function_name    = optional(string)                       # If unset, generate a default name based on event_type and the map key
     function_runtime = optional(string, "cloudfront-js-2.0"), # JS runtime; cloudfront-js-1.0 or cloudfront-js-2.0
     function_code    = string                                 # The source code for the function
     function_comment = optional(string)                       # Description for the function

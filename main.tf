@@ -523,7 +523,7 @@ resource "aws_cloudfront_function" "this" {
   for_each = var.cf_functions
   provider = aws.us_east_1
 
-  name    = "${var.domain_name}-${replace(each.key, " ", "_")}-function"
+  name    = each.value.function_name != null ? each.value.function_name : "${local.sanitized_domain}-${replace(each.key, " ", "_")}-function"
   comment = each.value.function_comment
   publish = true
   runtime = each.value.function_runtime
