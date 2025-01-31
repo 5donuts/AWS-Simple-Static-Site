@@ -25,6 +25,7 @@
         in {
           tf = pkgs.opentofu;
           aws = pkgs.awscli2;
+          git-cliff = pkgs.git-cliff;
         });
     };
 }
