@@ -286,7 +286,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs_bucket" {
   bucket = aws_s3_bucket.buckets[local.logs_bucket.name].id
 
   rule {
-    id     = "logs"
+    id     = "TransitionOldLogs"
     status = "Enabled"
 
     filter {
