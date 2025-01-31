@@ -38,6 +38,17 @@ variable "route53_records" {
   }))
 }
 
+variable "s3_logs_bucket_paths" {
+  description = "Configure the paths to which logs are saved in the logs bucket"
+  default     = {} # Use the default paths unless specified
+
+  type = object({
+    logs_root_path  = optional(string, "logs")
+    s3_logs_subpath = optional(string, "s3"), # These will be joined as "${logs_root_path}/${xx_logs_subpath}"
+    cf_logs_subpath = optional(string, "cf")  # For example, "logs/s3" and "logs/cf"
+  })
+}
+
 variable "cf_default_root_object" {
   description = "The default root object for CloudFront to use"
   type        = string

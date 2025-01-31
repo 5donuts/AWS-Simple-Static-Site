@@ -34,10 +34,9 @@ locals {
 
   buckets = [local.site_bucket, local.logs_bucket]
 
-  # --- Paths within the buckets where certain objects are located --- #
-  logs_root_path       = "logs"
-  bucket_logs_path     = "${local.logs_root_path}/s3"
-  cloudfront_logs_path = "${local.logs_root_path}/cf"
+  # --- Build the paths in the logs bucket at which to place logs --- #
+  s3_bucket_logs_path = join("/", [var.s3_logs_bucket_paths.logs_root_path, var.s3_logs_bucket_paths.s3_logs_subpath])
+  cf_logs_path        = join("/", [var.s3_logs_bucket_paths.logs_root_path, var.s3_logs_bucket_paths.cf_logs_subpath])
 }
 
 # --------------------------------------------------------------------------- #
@@ -218,7 +217,7 @@ resource "aws_s3_bucket_public_access_block" "buckets" {
 resource "aws_s3_bucket_logging" "site_bucket" {
   bucket        = aws_s3_bucket.buckets[local.site_bucket.name].id
   target_bucket = aws_s3_bucket.buckets[local.logs_bucket.name].id
-  target_prefix = local.bucket_logs_path
+  target_prefix = local.s3_bucket_logs_path
 }
 
 # See: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html#oac-permission-to-access-s3
@@ -272,7 +271,7 @@ data "aws_iam_policy_document" "logs_bucket" {
 
     resources = [
       "${aws_s3_bucket.buckets[local.logs_bucket.name].arn}",
-      "${aws_s3_bucket.buckets[local.logs_bucket.name].arn}/${local.bucket_logs_path}/*"
+      "${aws_s3_bucket.buckets[local.logs_bucket.name].arn}/${local.s3_bucket_logs_path}/*"
     ]
   }
 }
@@ -290,7 +289,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs_bucket" {
     status = "Enabled"
 
     filter {
-      prefix = "${local.logs_root_path}/"
+      prefix = "${var.s3_logs_bucket_paths.logs_root_path}/"
     }
 
     transition {
@@ -458,7 +457,7 @@ resource "aws_cloudfront_distribution" "this" {
   logging_config {
     include_cookies = false
     bucket          = aws_s3_bucket.buckets[local.logs_bucket.name].bucket_domain_name
-    prefix          = local.cloudfront_logs_path
+    prefix          = local.cf_logs_path
   }
 
   dynamic "custom_error_response" {
