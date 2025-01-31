@@ -223,7 +223,7 @@ resource "aws_s3_bucket_logging" "site_bucket" {
 
 # See: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html#oac-permission-to-access-s3
 # And: https://repost.aws/knowledge-center/s3-website-cloudfront-error-403
-data "aws_iam_policy_document" "site_bucket" {
+data "aws_iam_policy_document" "site_bucket_default" {
   statement {
     sid = "CloudFrontAccess"
 
@@ -255,10 +255,10 @@ data "aws_iam_policy_document" "site_bucket" {
 # See: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html#create-oac-overview-s3
 resource "aws_s3_bucket_policy" "site_bucket" {
   bucket = aws_s3_bucket.buckets[local.site_bucket.name].id
-  policy = data.aws_iam_policy_document.site_bucket.json
+  policy = can(var.s3_site_bucket_policy_json) ? var.s3_site_bucket_policy_json : data.aws_iam_policy_document.site_bucket_default.json
 }
 
-data "aws_iam_policy_document" "logs_bucket" {
+data "aws_iam_policy_document" "logs_bucket_default" {
   statement {
     sid = "S3PutAccessLogs"
 
@@ -279,7 +279,7 @@ data "aws_iam_policy_document" "logs_bucket" {
 
 resource "aws_s3_bucket_policy" "logs_bucket" {
   bucket = aws_s3_bucket.buckets[local.logs_bucket.name].id
-  policy = data.aws_iam_policy_document.logs_bucket.json
+  policy = can(var.s3_logs_bucket_policy_json) ? var.s3_logs_bucket_policy_json : data.aws_iam_policy_document.logs_bucket_default.json
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "logs_bucket" {

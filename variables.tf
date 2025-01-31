@@ -38,6 +38,18 @@ variable "route53_records" {
   }))
 }
 
+variable "s3_site_bucket_policy_json" {
+  description = "The policy to apply to the S3 bucket containing site content, overriding the default policy."
+  type        = string
+  default     = null
+}
+
+variable "s3_logs_bucket_policy_json" {
+  description = "The policy to apply to the S3 bucket containing S3 & CloudFront logs, overriding the default policy."
+  type        = string
+  default     = null
+}
+
 variable "cf_default_root_object" {
   description = "The default root object for CloudFront to use"
   type        = string
