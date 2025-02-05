@@ -172,6 +172,7 @@ resource "aws_s3_bucket" "buckets" {
   for_each = toset([for bucket in local.buckets : bucket.name])
 
   bucket = each.value
+  tags   = var.common_tags
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "sse_s3" {
