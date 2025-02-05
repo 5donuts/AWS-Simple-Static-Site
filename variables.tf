@@ -14,6 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+variable "common_tags" {
+  description = "Tags to apply to all taggable resources"
+  type        = map(any)
+  default     = {}
+}
+
 variable "domain_name" {
   description = "The domain name to use for the site"
   type        = string

@@ -45,6 +45,7 @@ locals {
 
 resource "aws_route53_zone" "site" {
   name = var.domain_name
+  tags = var.common_tags
 
   lifecycle {
     # AWS charges $0.50 per hosted zone, per month, up to a maximum of 25 hosted zones.
@@ -146,6 +147,8 @@ resource "aws_acm_certificate" "site" {
   subject_alternative_names = [
     "www.${var.domain_name}"
   ]
+
+  tags = var.common_tags
 
   lifecycle {
     create_before_destroy = true
@@ -512,6 +515,8 @@ resource "aws_cloudfront_distribution" "this" {
       locations        = var.cf_restrictions.locations
     }
   }
+
+  tags = var.common_tags
 }
 
 # --------------------------------------------------------------------------- #
