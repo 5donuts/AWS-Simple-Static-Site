@@ -35,3 +35,8 @@ output "cf_distribution_id" {
   description = "ID of the CloudFront distribution serving the site"
   value       = aws_cloudfront_distribution.this.id
 }
+
+output "cf_distribution_arn" {
+  description = "ARN of the CloudFront distribution serving the site"
+  value       = aws_cloudfront_distribution.this.arn
+}
