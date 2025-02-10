@@ -61,7 +61,7 @@ resource "aws_route53_zone" "site" {
 resource "aws_route53_record" "non_alias" {
   for_each = var.create_route53_zone ? {
     for record in var.route53_records : "${record.name == "" ? "@" : record.name}.${substr(md5(record.records[0]), 0, 5)}" => record if record.alias == null
-  } : null
+  } : {}
 
   zone_id = aws_route53_zone.site[0].zone_id
 
@@ -75,7 +75,7 @@ resource "aws_route53_record" "non_alias" {
 resource "aws_route53_record" "alias" {
   for_each = var.create_route53_zone ? {
     for record in var.route53_records : "${record.name == "" ? "@" : record.name}.${substr(md5(record.records[0]), 0, 5)}" => record if record.alias != null
-  } : null
+  } : {}
 
   zone_id = aws_route53_zone.site[0].zone_id
 
@@ -97,7 +97,7 @@ resource "aws_route53_record" "acm_validation" {
       type   = option.resource_record_type
       record = option.resource_record_value
     }
-  } : null
+  } : {}
 
   zone_id = aws_route53_zone.site[0].zone_id
 
