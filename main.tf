@@ -91,7 +91,7 @@ resource "aws_route53_record" "alias" {
 
 # Records to automatically validate the ACM certificate used by the site
 resource "aws_route53_record" "acm_validation" {
-  for_each = var.create_route53_zone ? {
+  for_each = var.create_route53_zone && var.auto_acm_validation ? {
     for option in aws_acm_certificate.site.domain_validation_options : option.domain_name => {
       name   = option.resource_record_name
       type   = option.resource_record_type
