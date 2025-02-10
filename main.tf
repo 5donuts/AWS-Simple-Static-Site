@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-data "aws_caller_identity" "this" {}
-
 locals {
   # --- Variables related to the domain name & CloudFront distribution origin --- #
   sanitized_domain = replace(var.domain_name, ".", "_")
@@ -123,71 +121,6 @@ resource "aws_route53_record" "cdn" {
     zone_id                = aws_cloudfront_distribution.this.hosted_zone_id
     evaluate_target_health = true
   }
-}
-
-# --------------------------------------------------------------------------- #
-#                    Configure DNSSEC for the Route53 Zone                    #
-# --------------------------------------------------------------------------- #
-
-data "aws_iam_policy_document" "dnssec" {
-  statement {
-    sid = "Allow Route53 DNSSEC Service"
-
-    principals {
-      type        = "Service"
-      identifiers = ["dnssec-route53.amazonaws.com"]
-    }
-
-    effect = "Allow"
-
-    actions = [
-      "kms:DescribeKey",
-      "kms:GetPublicKey",
-      "kms:Sign",
-      "kms:Verify"
-    ]
-
-    resources = ["*"]
-  }
-
-  statement {
-    sid = "Enable IAM User Permissions"
-
-    principals {
-      type        = "AWS"
-      identifiers = ["arn:aws:iam::${data.aws_caller_identity.this.account_id}:root"]
-    }
-
-    effect    = "Allow"
-    actions   = ["kms:*"]
-    resources = ["*"]
-  }
-}
-
-resource "aws_kms_key" "dnssec" {
-  provider = aws.us_east_1
-
-  key_usage                = "SIGN_VERIFY"
-  customer_master_key_spec = "ECC_NIST_P521"
-  deletion_window_in_days  = 7
-
-  policy = data.aws_iam_policy_document.dnssec.json
-
-  tags = var.common_tags
-}
-
-resource "aws_route53_key_signing_key" "this" {
-  name                       = "${local.sanitized_domain}-ksk"
-  hosted_zone_id             = aws_route53_zone.site.zone_id
-  key_management_service_arn = aws_kms_key.dnssec.arn
-}
-
-resource "aws_route53_hosted_zone_dnssec" "this" {
-  hosted_zone_id = aws_route53_zone.site.zone_id
-
-  depends_on = [
-    aws_kms_key.dnssec
-  ]
 }
 
 # --------------------------------------------------------------------------- #
