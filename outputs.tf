@@ -17,8 +17,21 @@
 output "route53_hosted_zone_nameservers" {
   # If you purchased the domain name from a registrar other than AWS, you'll need to configure these nameservers
   # as authorities for the domain.
-  description = "Nameservers for the Route53 public hosted zone"
-  value       = aws_route53_zone.site.name_servers
+  description = "Nameservers for the Route53 public hosted zone, if created"
+  value       = var.create_route53_zone ? aws_route53_zone.site[0].name_servers : null
+}
+
+output "acm_validation_dns_records" {
+  # If you haven't configured automatic ACM certificate validation with Route53, you'll need to manually add
+  # these records to your DNS config.
+  description = "DNS Records to validate the site's ACM certificate"
+  value = var.auto_acm_validation ? null : {
+    for option in aws_acm_certificate.site.domain_validation_options : option.domain_name => {
+      name   = option.resource_record_name
+      type   = option.resource_record_type
+      record = option.resource_record_value
+    }
+  }
 }
 
 output "s3_site_content_bucket_arn" {
@@ -39,4 +52,16 @@ output "cf_distribution_id" {
 output "cf_distribution_arn" {
   description = "ARN of the CloudFront distribution serving the site"
   value       = aws_cloudfront_distribution.this.arn
+}
+
+output "cf_distribution_cname_records" {
+  description = "The CNAME records to create for the CloudFront distribution, if not using Route53"
+  value = var.create_route53_zone ? null : [
+    # Many DNS providers won't allow you to create a CNAME record for the root of the zone, so this
+    # may prove problematic to accomplish if using neither Route53 nor CloudFlare to manage your DNS.
+    for record in ["@", "www"] : {
+      name   = record
+      record = aws_cloudfront_distribution.this.domain_name
+    }
+  ]
 }

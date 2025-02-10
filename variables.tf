@@ -25,8 +25,20 @@ variable "domain_name" {
   type        = string
 }
 
+variable "create_route53_zone" {
+  description = "If true, create a Route53 Public Hosted Zone & manage DNS records"
+  type        = bool
+  default     = true
+}
+
+variable "auto_acm_validation" {
+  description = "If true, automatically validate ACM certs as part of the apply; requires managed Route53 Public Hosted Zone"
+  type        = bool
+  default     = true
+}
+
 variable "route53_records" {
-  description = "List of additional Route53 records to add to the hosted zone"
+  description = "List of additional Route53 records to add to the managed Route53 Public Hosted Zone"
   default     = []
 
   type = list(object({

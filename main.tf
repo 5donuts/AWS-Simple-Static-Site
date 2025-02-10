@@ -44,6 +44,8 @@ locals {
 # --------------------------------------------------------------------------- #
 
 resource "aws_route53_zone" "site" {
+  count = var.create_route53_zone ? 1 : 0
+
   name = var.domain_name
   tags = var.common_tags
 
@@ -57,11 +59,11 @@ resource "aws_route53_zone" "site" {
 
 # Create specified non-alias Route53 records for the hosted zone
 resource "aws_route53_record" "non_alias" {
-  for_each = {
+  for_each = var.create_route53_zone ? {
     for record in var.route53_records : "${record.name == "" ? "@" : record.name}.${substr(md5(record.records[0]), 0, 5)}" => record if record.alias == null
-  }
+  } : null
 
-  zone_id = aws_route53_zone.site.zone_id
+  zone_id = aws_route53_zone.site[0].zone_id
 
   name    = each.value.name
   type    = each.value.type
@@ -71,11 +73,11 @@ resource "aws_route53_record" "non_alias" {
 
 # Create specified alias Route53 records for the hosted zone
 resource "aws_route53_record" "alias" {
-  for_each = {
+  for_each = var.create_route53_zone ? {
     for record in var.route53_records : "${record.name == "" ? "@" : record.name}.${substr(md5(record.records[0]), 0, 5)}" => record if record.alias != null
-  }
+  } : null
 
-  zone_id = aws_route53_zone.site.zone_id
+  zone_id = aws_route53_zone.site[0].zone_id
 
   name = each.value.name
   type = each.value.type
@@ -89,15 +91,15 @@ resource "aws_route53_record" "alias" {
 
 # Records to automatically validate the ACM certificate used by the site
 resource "aws_route53_record" "acm_validation" {
-  for_each = {
+  for_each = var.create_route53_zone ? {
     for option in aws_acm_certificate.site.domain_validation_options : option.domain_name => {
       name   = option.resource_record_name
       type   = option.resource_record_type
       record = option.resource_record_value
     }
-  }
+  } : null
 
-  zone_id = aws_route53_zone.site.zone_id
+  zone_id = aws_route53_zone.site[0].zone_id
 
   name = each.value.name
   type = each.value.type
@@ -110,9 +112,9 @@ resource "aws_route53_record" "acm_validation" {
 
 # Alias records for the CloudFront distribution
 resource "aws_route53_record" "cdn" {
-  for_each = toset([var.domain_name, "www.${var.domain_name}"])
+  for_each = var.create_route53_zone ? toset([var.domain_name, "www.${var.domain_name}"]) : null
 
-  zone_id = aws_route53_zone.site.zone_id
+  zone_id = aws_route53_zone.site[0].zone_id
   name    = each.value
   type    = "A"
 
@@ -158,6 +160,7 @@ resource "aws_acm_certificate" "site" {
 # This resource does not represent a real-word entity.
 # This resource is used to wait for ACM validation to complete.
 resource "aws_acm_certificate_validation" "site" {
+  count    = var.auto_acm_validation ? 1 : 0
   provider = aws.us_east_1
 
   certificate_arn         = aws_acm_certificate.site.arn
