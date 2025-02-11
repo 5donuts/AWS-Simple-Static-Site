@@ -93,7 +93,9 @@ usage, where appropriate.
 **`common_tags`**
 
 Description: `Tags to apply to all taggable resources`
+
 Type: `map(any)`
+
 Default: `{}`
 
 Use this variable to apply tags (for example, user-defined cost allocation tags) to all taggable resources created by this module.
@@ -106,9 +108,10 @@ common_tags = {
 }
 ```
 
-**`domain_name`
+**`domain_name`**
 
 Description: `The domain name to use for the site`
+
 Type: `string`
 
 Specify the domain name to use for this site.
@@ -120,7 +123,9 @@ If your site needs to be deployed as a subdomain, you should set `create_route53
 **`create_route53_zone`**
 
 Description: `If true, create a Route53 Public Hosted Zone & manage DNS records`
+
 Type: `bool`
+
 Default: `true`
 
 Set this to false if you do not want the module to create a Route53 Public Hosted Zone for your domain.
@@ -131,7 +136,9 @@ Scenarios where you wouldn't want the module to create a hosted zone include:
 **`auto_acm_validation`**
 
 Description: `If true, automatically validate ACM certs as part of the apply; requires managed Route53 Public Hosted Zone`
+
 Type: `bool`
+
 Default: `true`
 
 This module generates an ACM certificate configured to use DNS-based validation.
@@ -142,7 +149,9 @@ Otherwise, the validation records will be provided as module outputs.
 **`route53_records`**
 
 Description: `List of additional Route53 records to add to the managed Route53 Public Hosted Zone`
+
 Default: `[]`
+
 Type:
 ```tf
 list(object({
@@ -197,7 +206,9 @@ Alternatively, I can also recommend [_Run Your Own Mail Server_](https://mwl.io/
 **`s3_logs_bucket_paths`**
 
 Description: `Configure the paths to which logs are saved in the logs bucket`
+
 Default: `{}`
+
 Type:
 ```tf
 object({
@@ -213,16 +224,20 @@ In that case, specify the paths in that imported bucket where S3 Access Logs and
 **`cf_default_root_object`**
 
 Description: `The default root object for CloudFront to use`
+
 Type: `string`
+
 Default: `index.html`
 
 This is the object in the S3 bucket that CloudFront will serve when a visitor accesses the root (`/`) of the site.
-If you are using a Static Site Generator, it is very likely to be `index.html`.
+If you are using a static site generator, it is very likely to be `index.html`.
 
 **`cf_custom_error_responses`**
 
 Description: `Custom error response configurations for the CloudFront Distribution`
+
 Default: `[]`
+
 Type:
 ```tf
 list(object({
@@ -249,7 +264,9 @@ cf_custom_error_responses = [
 **`cf_price_class`**
 
 Description: `Price class of the CDN. See https://aws.amazon.com/cloudfront/pricing/ for details.`
+
 Type: `string`
+
 Default: `PriceClass_100`
 
 By default, use the cheapest price class.
@@ -259,7 +276,9 @@ price class.
 **`cf_restrictions`**
 
 Description: `Whitelist or blacklist certain regions, or place no restrictions on viewing your content.`
+
 Default: `{}`
+
 Type:
 ```tf
 object({
@@ -274,7 +293,9 @@ For details, see [the AWS docs](https://docs.aws.amazon.com/AmazonCloudFront/lat
 **`cf_remove_headers`**
 
 Description: `List of headers to remove from responses to clients`
+
 Type: `list(string)`
+
 Default:
 ```tf
 [
@@ -291,7 +312,9 @@ For details, see [the AWS docs](https://docs.aws.amazon.com/AmazonCloudFront/lat
 **`cf_custom_headers`**
 
 Description: `Map of headers to add to responses to clients`
+
 Type: `map(string)`
+
 Default: `{}`
 
 Use this variable to add custom headers to responses.
@@ -323,7 +346,9 @@ cf_custom_headers = {
 **`cf_functions`**
 
 Description: `Configure CloudFront Functions to customize distribution behaviors`
+
 Default: `{}`
+
 Type:
 ```tf
 map(object({
