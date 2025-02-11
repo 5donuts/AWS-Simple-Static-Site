@@ -127,7 +127,7 @@ variable "cf_custom_headers" {
 # Configure CloudFront Functions to customize distribution behaviors.
 variable "cf_functions" {
   description = "Configure CloudFront Functions to customize distribution behaviors."
-  default     = null
+  default     = {}
 
   type = map(object({
     event_type       = string,                                # Event the function processes; viewer-request or viewer-response
