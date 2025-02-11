@@ -34,14 +34,14 @@ output "acm_validation_dns_records" {
   }
 }
 
-output "s3_site_content_bucket_arn" {
-  description = "ARN of the S3 bucket hosting site content"
-  value       = aws_s3_bucket.buckets[local.site_bucket.name].arn
+output "s3_site_content_bucket_name" {
+  description = "Name of the S3 bucket hosting site content"
+  value       = aws_s3_bucket.buckets[local.site_bucket.name].id
 }
 
-output "s3_logs_bucket_arn" {
-  description = "ARN of the S3 bucket containing S3 & CloudFront logs"
-  value       = aws_s3_bucket.buckets[local.logs_bucket.name].arn
+output "s3_logs_bucket_name" {
+  description = "Name of the S3 bucket containing S3 & CloudFront logs"
+  value       = aws_s3_bucket.buckets[local.logs_bucket.name].id
 }
 
 output "cf_distribution_id" {
