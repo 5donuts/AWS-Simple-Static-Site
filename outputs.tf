@@ -55,10 +55,11 @@ output "cf_distribution_arn" {
 }
 
 output "cf_distribution_cname_records" {
-  description = "The CNAME records to create for the CloudFront distribution, if not using Route53"
-  value = var.create_route53_zone ? null : [
-    # Many DNS providers won't allow you to create a CNAME record for the root of the zone, so this
-    # may prove problematic to accomplish if using neither Route53 nor CloudFlare to manage your DNS.
+  description = "The CNAME records to create for the CloudFront distribution"
+
+  # Many DNS providers won't allow you to create a CNAME record for the root of the zone, so this
+  # may prove problematic to accomplish if using neither Route53 nor CloudFlare to manage your DNS.
+  value = [
     for record in ["@", "www"] : {
       name   = record
       record = aws_cloudfront_distribution.this.domain_name
