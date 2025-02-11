@@ -105,7 +105,7 @@ resource "aws_route53_record" "acm_validation" {
 
 # Alias records for the CloudFront distribution
 resource "aws_route53_record" "cdn" {
-  for_each = var.create_route53_zone ? toset([var.domain_name, "www.${var.domain_name}"]) : null
+  for_each = var.create_route53_zone ? toset([var.domain_name, "www.${var.domain_name}"]) : []
 
   zone_id = aws_route53_zone.site[0].zone_id
   name    = each.value
