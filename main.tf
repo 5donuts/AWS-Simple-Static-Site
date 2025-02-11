@@ -48,13 +48,6 @@ resource "aws_route53_zone" "site" {
 
   name = var.domain_name
   tags = var.common_tags
-
-  lifecycle {
-    # AWS charges $0.50 per hosted zone, per month, up to a maximum of 25 hosted zones.
-    # If (for whatever reason), you ran a number of create & destroy plans in one month you could
-    # run your bill up to $12.50 for no real reason.
-    prevent_destroy = true
-  }
 }
 
 # Create specified non-alias Route53 records for the hosted zone
