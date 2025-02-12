@@ -54,6 +54,11 @@ output "cf_distribution_arn" {
   value       = aws_cloudfront_distribution.this.arn
 }
 
+output "cf_distribution_domain_name" {
+  description = "The domain name of the CloudFront distribution"
+  value       = aws_cloudfront_distribution.this.domain_name
+}
+
 output "cf_distribution_cname_records" {
   description = "The CNAME records to create for the CloudFront distribution"
 
