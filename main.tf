@@ -105,7 +105,7 @@ resource "aws_route53_record" "acm_validation" {
 
 # Alias records for the CloudFront distribution
 resource "aws_route53_record" "cdn" {
-  for_each = var.create_route53_zone ? toset([var.domain_name, "www.${var.domain_name}"]) : []
+  for_each = var.create_route53_zone ? toset(concat([var.domain_name], var.alternative_names)) : []
 
   zone_id = aws_route53_zone.site[0].zone_id
   name    = each.value
@@ -127,8 +127,9 @@ resource "aws_route53_record" "cdn" {
 resource "aws_acm_certificate" "site" {
   provider = aws.us_east_1
 
-  domain_name       = var.domain_name
-  validation_method = "DNS"
+  domain_name               = var.domain_name
+  subject_alternative_names = var.alternative_names
+  validation_method         = "DNS"
 
   # ACM can only request new certificates with the following algorithms:
   # * RSA_2048
@@ -138,10 +139,6 @@ resource "aws_acm_certificate" "site" {
   # However, a number of additional algorithms are supported when importing certificates.
   # For details, see: https://docs.aws.amazon.com/acm/latest/userguide/acm-certificate-characteristics.html
   key_algorithm = "RSA_2048"
-
-  subject_alternative_names = [
-    "www.${var.domain_name}"
-  ]
 
   tags = var.common_tags
 
@@ -363,21 +360,21 @@ resource "aws_cloudfront_response_headers_policy" "this" {
         "default-src 'none'",
         "object-src 'none'",
         "frame-ancestors 'none'",
-        "base-uri ${var.domain_name} www.${var.domain_name}",
-        "form-action ${var.domain_name} www.${var.domain_name}",
-        "connect-src ${var.domain_name} www.${var.domain_name}",
-        "script-src ${var.domain_name} www.${var.domain_name}",
-        "style-src ${var.domain_name} www.${var.domain_name} 'unsafe-inline'",
-        "img-src ${var.domain_name} www.${var.domain_name}",
-        "font-src ${var.domain_name} www.${var.domain_name}"
+        "base-uri ${join(" ", concat([var.domain_name], var.alternative_names))}",
+        "form-action ${join(" ", concat([var.domain_name], var.alternative_names))}",
+        "connect-src ${join(" ", concat([var.domain_name], var.alternative_names))}",
+        "script-src ${join(" ", concat([var.domain_name], var.alternative_names))}",
+        "style-src ${join(" ", concat([var.domain_name], var.alternative_names))} 'unsafe-inline'",
+        "img-src ${join(" ", concat([var.domain_name], var.alternative_names))}",
+        "font-src ${join(" ", concat([var.domain_name], var.alternative_names))}",
       ])
       override = true
     }
   }
 
-  # When visiting the site from https://www.${var.domain_name}, some resources are not loaded
+  # When visiting the site from an alternative name, some resources are not loaded
   # properly because the requests are considered as coming from a different origin. This block
-  # configures the 'www.' domain as an allowed origin.
+  # configures the alternatve names as allowed origins.
   cors_config {
     access_control_allow_credentials = false
     origin_override                  = true
@@ -396,9 +393,7 @@ resource "aws_cloudfront_response_headers_policy" "this" {
     }
 
     access_control_allow_origins {
-      items = [
-        "https://www.${var.domain_name}"
-      ]
+      items = var.alternative_names
     }
   }
 
@@ -442,11 +437,7 @@ resource "aws_cloudfront_distribution" "this" {
   http_version        = "http2and3" # Enable HTTP/2 and HTTP/3 (QUIC)
   price_class         = var.cf_price_class
   default_root_object = var.cf_default_root_object
-
-  aliases = [
-    var.domain_name,
-    "www.${var.domain_name}"
-  ]
+  aliases             = concat([var.domain_name], var.alternative_names)
 
   origin {
     origin_id                = local.cf_s3_origin_id

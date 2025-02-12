@@ -25,6 +25,12 @@ variable "domain_name" {
   type        = string
 }
 
+variable "alternative_names" {
+  description = "Any other domains or subdomains to use for this site"
+  type        = list(string)
+  default     = []
+}
+
 variable "create_route53_zone" {
   description = "If true, create a Route53 Public Hosted Zone & manage DNS records"
   type        = bool
