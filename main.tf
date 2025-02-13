@@ -37,6 +37,25 @@ locals {
   # --- Build the paths in the logs bucket at which to place logs --- #
   s3_bucket_logs_path = join("/", [var.s3_logs_bucket_paths.logs_root_path, var.s3_logs_bucket_paths.s3_logs_subpath])
   cf_logs_path        = join("/", [var.s3_logs_bucket_paths.logs_root_path, var.s3_logs_bucket_paths.cf_logs_subpath])
+
+  # --- Build the fallback Content-Security-Policy to use if none is specified --- #
+  # You can evaluate the quality of this CSP using https://observatory.mozilla.org/
+  # This default CSP should be a good balance between security & functionality for many
+  # static site generators & site templates for those SSGs.
+  cf_default_csp_sources = join(" ", [for src in concat([var.domain_name], var.alternative_names) : "https://${src}/"])
+  cf_default_csp = join("; ", [
+    "default-src 'none'",
+    "object-src 'none'",
+    "frame-ancestors 'none",
+    "form-action 'none'",
+    "script-src 'none'",
+    "require-trusted-types-for 'script'",
+    "base-uri ${local.cf_default_csp_sources}",
+    "style-src ${local.cf_default_csp_sources}",
+    "img-src ${local.cf_default_csp_sources}",
+    "font-src ${local.cf_default_csp_sources}",
+    "connect-src ${local.cf_default_csp_sources}",
+  ])
 }
 
 # --------------------------------------------------------------------------- #
@@ -353,22 +372,8 @@ resource "aws_cloudfront_response_headers_policy" "this" {
     # Set Content-Security-Policy header
     # See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
     content_security_policy {
-      # You can evaluate the quality of this CSP using https://observatory.mozilla.org/
-      # This default CSP should be a good balance between security & functionality for many
-      # static site generators & site templates for those SSGs.
-      content_security_policy = join("; ", [
-        "default-src 'none'",
-        "object-src 'none'",
-        "frame-ancestors 'none'",
-        "base-uri ${join(" ", concat([var.domain_name], var.alternative_names))}",
-        "form-action ${join(" ", concat([var.domain_name], var.alternative_names))}",
-        "connect-src ${join(" ", concat([var.domain_name], var.alternative_names))}",
-        "script-src ${join(" ", concat([var.domain_name], var.alternative_names))}",
-        "style-src ${join(" ", concat([var.domain_name], var.alternative_names))} 'unsafe-inline'",
-        "img-src ${join(" ", concat([var.domain_name], var.alternative_names))}",
-        "font-src ${join(" ", concat([var.domain_name], var.alternative_names))}",
-      ])
-      override = true
+      content_security_policy = var.cf_content_security_policy == null || var.cf_content_security_policy == "" ? local.cf_default_csp : var.cf_content_security_policy
+      override                = true
     }
   }
 

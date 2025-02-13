@@ -79,6 +79,12 @@ variable "cf_default_root_object" {
   default     = "index.html"
 }
 
+variable "cf_content_security_policy" {
+  description = "The Content-Security-Policy for the site; if unset use a default CSP"
+  type        = string
+  default     = ""
+}
+
 variable "cf_custom_error_responses" {
   description = "Custom error response configurations for the CloudFront Distribution"
   default     = []
