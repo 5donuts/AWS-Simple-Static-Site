@@ -398,7 +398,7 @@ resource "aws_cloudfront_response_headers_policy" "this" {
     }
 
     access_control_allow_origins {
-      items = var.alternative_names
+      items = [for name in var.alternative_names : "https://${name}/"]
     }
   }
 
