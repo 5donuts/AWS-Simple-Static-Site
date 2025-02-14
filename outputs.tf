@@ -37,6 +37,8 @@ output "acm_validation_dns_records" {
 # In order to be able to output the certificate data (e.g., to use for TLSA/DANE records),
 # we need to use the data object rather than the resource.
 data "aws_acm_certificate" "site" {
+  provider = aws.us_east_1
+
   domain      = aws_acm_certificate.site.domain_name
   types       = [aws_acm_certificate.site.type]
   most_recent = true
