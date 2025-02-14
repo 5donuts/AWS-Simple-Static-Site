@@ -34,6 +34,24 @@ output "acm_validation_dns_records" {
   }
 }
 
+# In order to be able to output the certificate data (e.g., to use for TLSA/DANE records),
+# we need to use the data object rather than the resource.
+data "aws_acm_certificate" "site" {
+  domain      = aws_acm_certificate.site.domain_name
+  types       = [aws_acm_certificate.site.type]
+  most_recent = true
+
+  depends_on = [aws_acm_certificate.site]
+}
+
+output "acm_certificate_data" {
+  description = "Certificate data & chain of the issued AWS ACM certificate"
+  value = {
+    certificate       = data.aws_acm_certificate.site.certificate
+    certificate_chain = data.aws_acm_certificate.site.certificate_chain
+  }
+}
+
 output "s3_site_content_bucket_name" {
   description = "Name of the S3 bucket hosting site content"
   value       = aws_s3_bucket.buckets[local.site_bucket.name].id
