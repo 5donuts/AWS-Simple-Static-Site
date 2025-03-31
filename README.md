@@ -1,5 +1,7 @@
 # AWS Simple Static Site
 
+**:warning: This repository has moved to https://codeberg.org/5donuts/aws-simple-static-site**
+
 An OpenTofu module to economically host a static site on AWS using S3 and CloudFront.
 
 > [!WARNING]
